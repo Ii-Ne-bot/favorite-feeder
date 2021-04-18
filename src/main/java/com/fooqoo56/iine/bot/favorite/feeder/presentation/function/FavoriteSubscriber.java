@@ -1,10 +1,14 @@
 package com.fooqoo56.iine.bot.favorite.feeder.presentation.function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fooqoo56.iine.bot.favorite.feeder.presentation.function.dto.FeedTweet;
+import com.fooqoo56.iine.bot.favorite.feeder.application.service.FavoriteService;
+import com.fooqoo56.iine.bot.favorite.feeder.domain.model.Tweet;
+import com.fooqoo56.iine.bot.favorite.feeder.presentation.function.dto.FeedTask;
 import com.fooqoo56.iine.bot.favorite.feeder.presentation.function.dto.PubSubMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +21,7 @@ import org.springframework.lang.NonNull;
 @RequiredArgsConstructor
 public class FavoriteSubscriber {
     private final ObjectMapper objectMapper;
+    private final FavoriteService favoriteService;
 
     /**
      * pubsubでメッセージを受け取る関数
@@ -38,9 +43,22 @@ public class FavoriteSubscriber {
     @NonNull
     private Boolean favoriteTweetFunction(final PubSubMessage message) {
 
-        final FeedTweet feedTweet = mapTweetCondition(getDecodedMessage(message));
+        final FeedTask feedTask = mapTweetCondition(getDecodedMessage(message));
 
-        log.info(feedTweet.toString());
+        final Optional<Tweet>
+                tweetOptional =
+                favoriteService.favoriteTweet(feedTask.getTweetId(), feedTask.getUserId()).block();
+
+        // NullCheck or いいねが失敗した場合、例外を発生させる
+        if (Objects.isNull(tweetOptional) || tweetOptional.isEmpty()) {
+            log.error("Failed liking the tweet. messageId: {}", message.getMessageId());
+            return Boolean.FALSE;
+        }
+
+        // ツイートがnon nullの場合、ログ出力する
+        tweetOptional.ifPresent(
+                tweet -> log.info("Finished liking the tweet. tweetId: {}", tweet.getId()));
+
 
         return Boolean.TRUE;
     }
@@ -52,10 +70,10 @@ public class FavoriteSubscriber {
      * @return ツイート条件クラス
      */
     @NonNull
-    private FeedTweet mapTweetCondition(final String data)
+    private FeedTask mapTweetCondition(final String data)
             throws RuntimeException {
         try {
-            return objectMapper.readValue(data, FeedTweet.class);
+            return objectMapper.readValue(data, FeedTask.class);
         } catch (final Exception exception) {
             throw new RuntimeException(exception);
         }
