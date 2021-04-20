@@ -1,4 +1,4 @@
 spring:
   profiles:
     active: default
-    include: prod
+    include: local
