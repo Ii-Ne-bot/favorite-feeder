@@ -17,7 +17,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
-public class FeedTweet implements Serializable {
+public class FeedTask implements Serializable {
 
     private static final long serialVersionUID = -3737835488814731139L;
 
@@ -42,7 +42,7 @@ public class FeedTweet implements Serializable {
      * @param tweetId ツイートID
      */
     @JsonCreator
-    public FeedTweet(
+    public FeedTask(
             @JsonProperty(PARAM_USER_ID) final String userId,
             @JsonProperty(PARAM_TWEET_ID) final String tweetId
     ) {

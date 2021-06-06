@@ -1,7 +1,10 @@
 package com.fooqoo56.iine.bot.favorite.feeder.presentation.function
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fooqoo56.iine.bot.favorite.feeder.application.service.FavoriteService
+import com.fooqoo56.iine.bot.favorite.feeder.domain.model.Tweet
 import com.fooqoo56.iine.bot.favorite.feeder.presentation.function.dto.PubSubMessage
+import reactor.core.publisher.Mono
 import spock.lang.Specification
 
 /**
@@ -10,9 +13,13 @@ import spock.lang.Specification
 class FavoriteSubscriberSpec extends Specification {
 
     private FavoriteSubscriber sut
+    private FavoriteService favoriteService;
 
     final setup() {
-        sut = new FavoriteSubscriber(new ObjectMapper())
+        favoriteService = Mock(FavoriteService) {
+            favoriteTweet(*_) >> Mono.just(Optional.of(Mock(Tweet)))
+        }
+        sut = new FavoriteSubscriber(new ObjectMapper(), favoriteService)
     }
 
     final "favoriteTweetFunction"() {
